@@ -1,16 +1,114 @@
-# React + Vite
+# Medicine Search
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Overview
 
-Currently, two official plugins are available:
+Search medicines by brand name using the openFDA Drug Label API. Results show as cards,
+and clicking a card opens a detail page with more information about that medicine.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- Search by brand name
+- Result cards built from the `openfda` fields
+- Detail page on its own URL, works on refresh and direct links
+- Loading, no results and error states
+- Try again button when a request fails
+- Debounced input
+- Caching of previous searches
+- Request cancellation with AbortController
+- Responsive layout
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the Oxlint configuration
+- React
+- JavaScript
+- Vite
+- Tailwind CSS
+- React Router
+- fetch
+- openFDA Drug Label API
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Getting Started
+
+```
+npm install
+npm run dev
+```
+
+Runs at http://localhost:5173
+
+## Production Build
+
+```
+npm run build
+npm run preview
+```
+
+## Implementation Decisions
+
+**Quoted search terms.** The API uses Lucene syntax where a space acts as OR.
+`openfda.brand_name:advil pm` returns over 10,000 results, `openfda.brand_name:"advil pm"`
+returns 6. So every term is quoted, and quotes the user types are stripped first.
+
+**404 means no results.** The API returns 404 when a brand name matches nothing, so the
+service returns an empty array for that and only throws on real failures. Otherwise a typo
+would look like a broken app.
+
+**Cards only get `openfda`.** `MedicineCard` receives `result.openfda` and nothing else, so
+it cannot read a top level field by accident. The detail page does use top level fields
+because that is where the label text is.
+
+**Missing fields.** Cards show a fallback for the brand name and hide other missing fields.
+The detail page shows "Not available" instead, because a spec list with rows missing is
+confusing.
+
+**One status string** per page instead of separate loading and error booleans, so the two
+cannot both be true.
+
+**Query lives in the URL.** `SearchPage` reads it with `useSearchParams`. This keeps the
+search shareable and brings it back when you return from a detail page, without storing it
+twice.
+
+**Detail page refetches by id.** The route is `/medicine/:id` using the label's own `id`,
+and the page fetches `search=id:"<id>"&limit=1`. Passing the record through router state
+would be faster but empty after a refresh, so it would need a fetch fallback anyway.
+
+## Performance Decisions
+
+**Debounce (400ms).** Typing "advil" used to send 5 requests. Now it sends 1. The value is
+trimmed before being debounced, and the hook starts with the current value so opening
+`/?q=advil` searches straight away.
+
+**Cache.** A `Map` in `fdaApi.js` keyed on `query.trim().toLowerCase()`, so repeats and
+different casing reuse the same entry. `Map` because `.has()` tells the difference between a
+cached empty array and a query never run. Empty results are cached, errors are not.
+
+**Cancellation.** Each fetch effect makes an `AbortController` and aborts it on cleanup.
+Without it, searching "tylenol" then "aspirin" could let the slower tylenol response land
+last and overwrite the aspirin results. `AbortError` is checked first in the catch so a
+cancelled request never shows as an error.
+
+**No memoization.** The API returns at most 20 results and the cards are plain text, so
+there is nothing slow to memoize. Nothing is wrapped in `React.memo`, so a `useCallback`
+would be a stable reference that nothing compares. It would be cost with no benefit.
+
+## Trade-offs
+
+- The cache has no expiry or size limit and is lost on reload, since it lives in module
+  scope. Fine for data that does not change during a session.
+- The detail page refetches every visit instead of reusing a cached record. One code path
+  that is correct on refresh was worth more than the saved request.
+- `npm run lint` shows two `set-state-in-effect` warnings for `setStatus('loading')` before
+  each fetch. That is the normal pattern for fetching in an effect and the rule suggests
+  using a data fetching library, which I did not add. Left visible rather than silenced.
+
+## Future Improvements
+
+- Cache detail responses too
+- Pagination, since the API reports a total larger than the 20 results requested
+- Filter or sort results by product type or route
+- Tests for the API service and the missing field handling
+
+## Data Source
+
+openFDA Drug Label API. openFDA states the data is not validated and should not be used to
+make decisions about medical care.
