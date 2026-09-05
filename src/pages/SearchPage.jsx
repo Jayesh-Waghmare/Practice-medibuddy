@@ -9,6 +9,7 @@ export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [status, setStatus] = useState('idle')
   const [results, setResults] = useState([])
+  const [retryToken, setRetryToken]=useState(0)
 
   const query=searchParams.get('q') ?? ''
   const trimmedQuery = useDebounce(query.trim(), 400)
@@ -39,32 +40,51 @@ export default function SearchPage() {
       })
 
     return () => controller.abort()
-  }, [trimmedQuery])
+  }, [trimmedQuery, retryToken])
 
   return (
     <div>
+      <h1 className="mb-4 text-xl font-semibold">Search medicines</h1>
+
       <SearchBar query={query} onQueryChange={handleQueryChange} />
 
       <div className="mt-6">
         {status === 'idle' && (
-          <p className="text-slate-600">Search for a medicine by brand name.</p>
-        )}
-
-        {status === 'loading' && <p className="text-slate-600">Searching…</p>}
-
-        {status === 'error' && (
-          <p className="text-red-700">
-            Something went wrong while fetching medicines. Please try again.
+          <p role="status" className="text-slate-600">
+            Search for a medicine by brand name. Try Advil, Tylenol or Motrin.
           </p>
         )}
 
+        {status === 'loading' && (
+          <p role="status" className="text-slate-600">
+            Searching…
+          </p>
+        )}
+
+        {status === 'error' && (
+          <div role="status">
+            <p className="text-red-700">
+              Something went wrong while fetching medicines. Please try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => setRetryToken(retryToken + 1)}
+              className="mt-3 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {status === 'success' && results.length === 0 && (
-          <p className="text-slate-600">No results found for “{trimmedQuery}”.</p>
+          <p role="status" className="text-slate-600">
+            No results found for “{trimmedQuery}”.
+          </p>
         )}
 
         {status === 'success' && results.length > 0 && (
           <>
-            <p className="mb-3 text-sm text-slate-600">
+            <p role="status" className="mb-3 text-sm text-slate-600">
               {results.length} {results.length === 1 ? 'result' : 'results'} for “{trimmedQuery}”
             </p>
             <MedicineList results={results} />

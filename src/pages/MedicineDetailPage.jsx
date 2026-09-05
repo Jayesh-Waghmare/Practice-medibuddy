@@ -8,6 +8,7 @@ export default function MedicineDetailPage() {
   const location = useLocation()
   const [status, setStatus] = useState('loading')
   const [medicine, setMedicine] = useState(null)
+  const [retryToken, setRetryToken] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -25,7 +26,7 @@ export default function MedicineDetailPage() {
       })
 
     return () => controller.abort()
-  }, [id])
+  }, [id, retryToken])
 
   return (
     <div>
@@ -37,16 +38,29 @@ export default function MedicineDetailPage() {
       </Link>
 
       <div className="mt-4">
-        {status === 'loading' && <p className="text-slate-600">Loading medicine details…</p>}
-
-        {status === 'error' && (
-          <p className="text-red-700">
-            Something went wrong while loading this medicine. Please try again.
+        {status === 'loading' && (
+          <p role="status" className="text-slate-600">
+            Loading medicine details…
           </p>
         )}
 
+        {status === 'error' && (
+          <div role="status">
+            <p className="text-red-700">
+              Something went wrong while loading this medicine. Please try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => setRetryToken(retryToken + 1)}
+              className="mt-3 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {status === 'notfound' && (
-          <div>
+          <div role="status">
             <h1 className="text-xl font-semibold">Medicine not found</h1>
             <p className="mt-2 text-slate-600">
               We could not find a medicine for this link. It may be incorrect or no longer

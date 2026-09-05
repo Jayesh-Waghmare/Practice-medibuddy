@@ -1,4 +1,13 @@
+import { useRef } from 'react'
+
 export default function SearchBar({ query, onQueryChange }) {
+  const inputRef = useRef(null)
+
+  function handleClear() {
+    onQueryChange('')
+    inputRef.current.focus()
+  }
+
   return (
     <form role="search" onSubmit={(event) => event.preventDefault()}>
       <label htmlFor="medicine-search" className="block text-sm font-medium text-slate-700">
@@ -8,6 +17,7 @@ export default function SearchBar({ query, onQueryChange }) {
       <div className="relative mt-1">
         <input
           id="medicine-search"
+          ref={inputRef}
           type="text"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
@@ -20,9 +30,9 @@ export default function SearchBar({ query, onQueryChange }) {
         {query && (
           <button
             type="button"
-            onClick={() => onQueryChange('')}
+            onClick={handleClear}
             aria-label="Clear search"
-            className="absolute inset-y-0 right-0 px-3 text-xl leading-none text-slate-500 hover:text-slate-800"
+            className="absolute inset-y-0 right-0 rounded-r-md px-3 text-xl leading-none text-slate-500 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
           >
             &times;
           </button>

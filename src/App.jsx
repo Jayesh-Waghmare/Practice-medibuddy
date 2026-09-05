@@ -8,7 +8,10 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-4">
-          <Link to="/" className="text-lg font-semibold">
+          <Link
+            to="/"
+            className="rounded text-lg font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+          >
             Medicine Search
           </Link>
         </div>
