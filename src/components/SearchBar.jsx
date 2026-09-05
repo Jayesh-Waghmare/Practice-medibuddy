@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 
-export default function SearchBar({ query, onQueryChange }) {
+export default function SearchBar({ query, onQueryChange, onSubmit }) {
   const inputRef = useRef(null)
 
   function handleClear() {
@@ -8,13 +8,30 @@ export default function SearchBar({ query, onQueryChange }) {
     inputRef.current.focus()
   }
 
+  function handleSubmit(event) {
+    event.preventDefault()
+    onSubmit()
+  }
+
   return (
-    <form role="search" onSubmit={(event) => event.preventDefault()}>
-      <label htmlFor="medicine-search" className="block text-sm font-medium text-slate-700">
+    <form role="search" onSubmit={handleSubmit}>
+      <label htmlFor="medicine-search" className="sr-only">
         Medicine brand name
       </label>
 
-      <div className="relative mt-1">
+      <div className="relative">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+        >
+          <circle cx="9" cy="9" r="6" />
+          <path d="m14 14 4 4" strokeLinecap="round" />
+        </svg>
+
         <input
           id="medicine-search"
           ref={inputRef}
@@ -24,7 +41,7 @@ export default function SearchBar({ query, onQueryChange }) {
           placeholder="Search by brand name, for example Advil"
           autoComplete="off"
           enterKeyHint="search"
-          className="w-full rounded-md border border-slate-300 bg-white py-2 pl-3 pr-10 text-base outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+          className="w-full rounded-xl border border-slate-300 bg-white py-3.5 pl-12 pr-12 text-base shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
         />
 
         {query && (
@@ -32,9 +49,11 @@ export default function SearchBar({ query, onQueryChange }) {
             type="button"
             onClick={handleClear}
             aria-label="Clear search"
-            className="absolute inset-y-0 right-0 rounded-r-md px-3 text-xl leading-none text-slate-500 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
           >
-            &times;
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+              <path d="m5 5 10 10M15 5 5 15" strokeLinecap="round" />
+            </svg>
           </button>
         )}
       </div>

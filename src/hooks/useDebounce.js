@@ -8,5 +8,5 @@ export function useDebounce(value, delay) {
     return () => clearTimeout(timeout)
   }, [value, delay])
 
-  return debouncedValue
+  return [debouncedValue, setDebouncedValue]
 }

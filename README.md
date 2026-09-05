@@ -7,11 +7,14 @@ and clicking a card opens a detail page with more information about that medicin
 
 ## Features
 
-- Search by brand name
+- Search by brand name, with example searches to click
 - Result cards built from the `openfda` fields
 - Detail page on its own URL, works on refresh and direct links
-- Loading, no results and error states
-- Try again button when a request fails
+- Detail page shows the full label as collapsible sections, covering both OTC and
+  prescription labels, plus a product details panel
+- Loading skeletons, no results and error states
+- Enter searches straight away instead of waiting for the debounce
+- Try again button when a request fails, with a separate message for rate limiting
 - Debounced input
 - Caching of previous searches
 - Request cancellation with AbortController
@@ -51,7 +54,8 @@ returns 6. So every term is quoted, and quotes the user types are stripped first
 
 **404 means no results.** The API returns 404 when a brand name matches nothing, so the
 service returns an empty array for that and only throws on real failures. Otherwise a typo
-would look like a broken app.
+would look like a broken app. Other bad statuses throw an error carrying the status code, so
+a 429 can show a rate limit message while everything else falls back to the generic one.
 
 **Cards only get `openfda`.** `MedicineCard` receives `result.openfda` and nothing else, so
 it cannot read a top level field by accident. The detail page does use top level fields
@@ -63,6 +67,11 @@ confusing.
 
 **One status string** per page instead of separate loading and error booleans, so the two
 cannot both be true.
+
+**Label sections are a list, filtered by what exists.** OTC and prescription labels use
+completely different fields, so `LABEL_SECTIONS` lists the known ones in reading order and the
+page keeps only those present on the record. Each section is a native `<details>` element, so
+long prescription text stays collapsed without any open/closed state in React.
 
 **Query lives in the URL.** `SearchPage` reads it with `useSearchParams`. This keeps the
 search shareable and brings it back when you return from a detail page, without storing it
@@ -76,7 +85,8 @@ would be faster but empty after a refresh, so it would need a fetch fallback any
 
 **Debounce (400ms).** Typing "advil" used to send 5 requests. Now it sends 1. The value is
 trimmed before being debounced, and the hook starts with the current value so opening
-`/?q=advil` searches straight away.
+`/?q=advil` searches straight away. `useDebounce` also returns its setter, so submitting the
+form with Enter can skip the remaining delay instead of the key doing nothing.
 
 **Cache.** A `Map` in `fdaApi.js` keyed on `query.trim().toLowerCase()`, so repeats and
 different casing reuse the same entry. `Map` because `.has()` tells the difference between a
@@ -100,6 +110,12 @@ would be a stable reference that nothing compares. It would be cost with no bene
 - `npm run lint` shows two `set-state-in-effect` warnings for `setStatus('loading')` before
   each fetch. That is the normal pattern for fetching in an effect and the rule suggests
   using a data fetching library, which I did not add. Left visible rather than silenced.
+
+## Deployment
+
+Deployed on Vercel as a static Vite build. `vercel.json` rewrites all paths to `index.html`
+so that `/medicine/:id` still works on refresh and on direct links. `public/_redirects` does
+the same thing for Netlify.
 
 ## Future Improvements
 

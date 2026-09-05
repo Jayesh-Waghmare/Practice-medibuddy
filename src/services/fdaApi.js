@@ -9,6 +9,12 @@ function escapeTerm(term) {
   return term.replace(/["\\]/g, '')
 }
 
+function apiError(status) {
+  const error = new Error(`FDA API responded with status ${status}`)
+  error.status = status
+  return error
+}
+
 export async function searchMedicines(query, signal) {
   const cacheKey = query.trim().toLowerCase()
 
@@ -25,7 +31,7 @@ export async function searchMedicines(query, signal) {
   }
 
   if (!response.ok) {
-    throw new Error(`FDA API responded with status ${response.status}`)
+    throw apiError(response.status)
   }
 
   const data = await response.json()
@@ -44,9 +50,16 @@ export async function fetchMedicineById(id, signal) {
   }
 
   if (!response.ok) {
-    throw new Error(`FDA API responded with status ${response.status}`)
+    throw apiError(response.status)
   }
 
   const data = await response.json()
   return Array.isArray(data.results) ? (data.results[0] ?? null) : null
+}
+
+export function errorMessageFor(error, fallbackMessage) {
+  if (error.status === 429) {
+    return 'Too many requests to the FDA API. Please wait a moment and try again.'
+  }
+  return fallbackMessage
 }
