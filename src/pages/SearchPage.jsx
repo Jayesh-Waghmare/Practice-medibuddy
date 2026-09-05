@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import SearchBar from '../components/SearchBar.jsx'
+import MedicineList from '../components/MedicineList.jsx'
 import { searchMedicines } from '../services/fdaApi.js'
 
 export default function SearchPage() {
@@ -51,13 +52,12 @@ export default function SearchPage() {
         )}
 
         {status === 'success' && results.length > 0 && (
-          <ul className="space-y-2">
-            {results.map((result) => (
-              <li key={result.id} className="rounded-md border border-slate-200 bg-white p-3">
-                {result.openfda?.brand_name?.[0] ?? 'Not available'}
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className="mb-3 text-sm text-slate-600">
+              {results.length} {results.length === 1 ? 'result' : 'results'} for “{trimmedQuery}”
+            </p>
+            <MedicineList results={results} />
+          </>
         )}
       </div>
     </div>
