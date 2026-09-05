@@ -8,7 +8,7 @@ export default function MedicineCard({ openfda }) {
   const route = firstValue(openfda.route)
 
   return (
-    <article className="h-full rounded-lg border border-slate-200 bg-white p-4">
+    <article className="h-full rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-slate-400">
       <h2 className="font-semibold text-slate-900">
         {brandName ?? 'Brand name not available'}
       </h2>

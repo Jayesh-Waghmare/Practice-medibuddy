@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import SearchBar from '../components/SearchBar.jsx'
 import MedicineList from '../components/MedicineList.jsx'
 import { searchMedicines } from '../services/fdaApi.js'
 
 export default function SearchPage() {
-  const [query, setQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
   const [status, setStatus] = useState('idle')
   const [results, setResults] = useState([])
 
+  const query=searchParams.get('q') ?? ''
   const trimmedQuery = query.trim()
+
+  function handleQueryChange(value) {
+    setSearchParams(value ? { q: value } : {}, { replace: true })
+  }
 
   useEffect(() => {
     if (!trimmedQuery) {
@@ -32,7 +38,7 @@ export default function SearchPage() {
 
   return (
     <div>
-      <SearchBar query={query} onQueryChange={setQuery} />
+      <SearchBar query={query} onQueryChange={handleQueryChange} />
 
       <div className="mt-6">
         {status === 'idle' && (
