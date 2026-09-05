@@ -10,17 +10,21 @@ export default function MedicineDetailPage() {
   const [medicine, setMedicine] = useState(null)
 
   useEffect(() => {
+    const controller = new AbortController()
     setStatus('loading')
 
-    fetchMedicineById(id)
+    fetchMedicineById(id, controller.signal)
       .then((result) => {
         setMedicine(result)
         setStatus(result ? 'success' : 'notfound')
       })
       .catch((error) => {
+        if (error.name === 'AbortError') return
         console.error(error)
         setStatus('error')
       })
+
+    return () => controller.abort()
   }, [id])
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import SearchBar from '../components/SearchBar.jsx'
 import MedicineList from '../components/MedicineList.jsx'
+import { useDebounce } from '../hooks/useDebounce.js'
 import { searchMedicines } from '../services/fdaApi.js'
 
 export default function SearchPage() {
@@ -10,7 +11,7 @@ export default function SearchPage() {
   const [results, setResults] = useState([])
 
   const query=searchParams.get('q') ?? ''
-  const trimmedQuery = query.trim()
+  const trimmedQuery = useDebounce(query.trim(), 400)
 
   function handleQueryChange(value) {
     setSearchParams(value ? { q: value } : {}, { replace: true })
@@ -23,17 +24,21 @@ export default function SearchPage() {
       return
     }
 
+    const controller = new AbortController()
     setStatus('loading')
 
-    searchMedicines(trimmedQuery)
+    searchMedicines(trimmedQuery, controller.signal)
       .then((medicines) => {
         setResults(medicines)
         setStatus('success')
       })
       .catch((error) => {
+        if (error.name === 'AbortError') return
         console.error(error)
         setStatus('error')
       })
+
+    return () => controller.abort()
   }, [trimmedQuery])
 
   return (
